@@ -10,12 +10,10 @@ st.set_page_config(page_title="💬 JAssist", page_icon="💬", layout="centered
 # =============== GLOBAL STYLES (UI) ===============
 st.markdown("""
 <style>
-/* batasi lebar agar lebih enak dibaca di desktop */
 .block-container {max-width: 820px;}
-/* rapikan padding chat bubble */
-.stChatMessage {margin-bottom: 0.5rem;}
-.small-muted {font-size: 0.75rem; opacity: 0.7; margin-top: -0.25rem;}
-hr {margin: 0.75rem 0;}
+.stChatMessage {margin-bottom: 0.4rem;}
+.small-muted {font-size: 0.75rem; opacity: 0.65; margin-top: -0.25rem;}
+hr {margin: 0.6rem 0;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -44,12 +42,9 @@ SYSTEM_PROMPT = (
 MAX_TURNS_DISPLAY = 12
 MAX_INPUT_CHARS = 4000
 
-# =============== SIDEBAR (Kontrol & Info) ===============
+# =============== SIDEBAR ===============
 with st.sidebar:
-    st.subheader("⚙️ Pengaturan")
-    compact = st.toggle("Mode compact", value=True, help="Perkecil jarak antar bubble chat.")
-    st.divider()
-
+    st.subheader("⚙️ Kontrol")
     # Unduh riwayat percakapan
     if "messages" in st.session_state and st.session_state.get("messages"):
         export_text = []
@@ -85,15 +80,10 @@ def now_str():
     return datetime.now().strftime("%H:%M")
 
 def render_msg(role: str, content: str, time_str: str):
-    """Render satu pesan dengan avatar + timestamp kecil."""
     avatar = "🧑" if role == "user" else "🤖"
     with st.chat_message(role, avatar=avatar):
         st.markdown(content)
-        # timestamp kecil
-        if compact:
-            st.markdown(f"<div class='small-muted'>{time_str}</div>", unsafe_allow_html=True)
-        else:
-            st.caption(time_str)
+        st.markdown(f"<div class='small-muted'>{time_str}</div>", unsafe_allow_html=True)
 
 # =============== TAMPILKAN RIWAYAT ===============
 for msg in st.session_state.messages[-2*MAX_TURNS_DISPLAY:]:
@@ -127,16 +117,11 @@ if prompt:
                     if hasattr(chunk, "text") and chunk.text:
                         full_text += chunk.text
                         placeholder.markdown(full_text)
-
             except Exception as e:
                 full_text = f"Maaf, terjadi kesalahan: {e}"
                 placeholder.markdown(full_text)
 
-        # timestamp di bawah balasan
-        if compact:
-            st.markdown(f"<div class='small-muted'>{time_bot}</div>", unsafe_allow_html=True)
-        else:
-            st.caption(time_bot)
+        st.markdown(f"<div class='small-muted'>{time_bot}</div>", unsafe_allow_html=True)
 
     # Simpan jawaban bot ke riwayat UI
     st.session_state.messages.append({"role": "assistant", "content": full_text, "time": time_bot})
