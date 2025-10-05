@@ -2,9 +2,24 @@ import os
 import streamlit as st
 import google.generativeai as genai
 from dotenv import load_dotenv
+from datetime import datetime
 
 # =============== PAGE CONFIG ===============
 st.set_page_config(page_title="💬 JAssist", page_icon="💬", layout="centered")
+
+# =============== GLOBAL STYLES (UI) ===============
+st.markdown("""
+<style>
+/* batasi lebar agar lebih enak dibaca di desktop */
+.block-container {max-width: 820px;}
+/* rapikan padding chat bubble */
+.stChatMessage {margin-bottom: 0.5rem;}
+.small-muted {font-size: 0.75rem; opacity: 0.7; margin-top: -0.25rem;}
+hr {margin: 0.75rem 0;}
+</style>
+""", unsafe_allow_html=True)
+
+# =============== HEADER ===============
 st.title("💬 JAssist")
 st.caption("Ngobrol santai dengan AI yang siap membantu apa pun topikmu 🤖")
 
@@ -29,30 +44,73 @@ SYSTEM_PROMPT = (
 MAX_TURNS_DISPLAY = 12
 MAX_INPUT_CHARS = 4000
 
+# =============== SIDEBAR (Kontrol & Info) ===============
+with st.sidebar:
+    st.subheader("⚙️ Pengaturan")
+    compact = st.toggle("Mode compact", value=True, help="Perkecil jarak antar bubble chat.")
+    st.divider()
+
+    # Unduh riwayat percakapan
+    if "messages" in st.session_state and st.session_state.get("messages"):
+        export_text = []
+        for m in st.session_state["messages"]:
+            role = "Kamu" if m["role"] == "user" else "JAssist"
+            t = m.get("time", "")
+            export_text.append(f"[{t}] {role}: {m['content']}")
+        st.download_button(
+            "⬇️ Unduh Riwayat (.txt)",
+            data="\n\n".join(export_text),
+            file_name=f"JAssist_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            mime="text/plain"
+        )
+    if st.button("🧹 Hapus Riwayat Chat"):
+        st.session_state.messages = []
+        model = genai.GenerativeModel(MODEL_NAME, system_instruction=SYSTEM_PROMPT)
+        st.session_state.chat = model.start_chat(history=[])
+        st.rerun()
+
+# =============== STATUS CHIP ===============
+st.info(f"**JAssist** • Model: `{MODEL_NAME}` • Suhu: `{TEMPERATURE}`", icon="🧠")
+
 # =============== INIT SESSION STATE ===============
 if "messages" not in st.session_state:
-    st.session_state.messages = []   # untuk UI
+    st.session_state.messages = []   # untuk UI: [{role, content, time}]
 
 if "chat" not in st.session_state:
     model = genai.GenerativeModel(MODEL_NAME, system_instruction=SYSTEM_PROMPT)
     st.session_state.chat = model.start_chat(history=[])
 
+# =============== HELPERS ===============
+def now_str():
+    return datetime.now().strftime("%H:%M")
+
+def render_msg(role: str, content: str, time_str: str):
+    """Render satu pesan dengan avatar + timestamp kecil."""
+    avatar = "🧑" if role == "user" else "🤖"
+    with st.chat_message(role, avatar=avatar):
+        st.markdown(content)
+        # timestamp kecil
+        if compact:
+            st.markdown(f"<div class='small-muted'>{time_str}</div>", unsafe_allow_html=True)
+        else:
+            st.caption(time_str)
+
 # =============== TAMPILKAN RIWAYAT ===============
 for msg in st.session_state.messages[-2*MAX_TURNS_DISPLAY:]:
-    with st.chat_message("user" if msg["role"] == "user" else "assistant"):
-        st.markdown(msg["content"])
+    render_msg(msg["role"], msg["content"], msg.get("time", ""))
 
 # =============== INPUT PENGGUNA ===============
 prompt = st.chat_input("Ketik pesan kamu di sini…")
 
 if prompt:
     prompt = prompt.strip()[:MAX_INPUT_CHARS]
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    time_user = now_str()
+    st.session_state.messages.append({"role": "user", "content": prompt, "time": time_user})
+    render_msg("user", prompt, time_user)
 
     # Minta jawaban dari Gemini (dengan streaming)
-    with st.chat_message("assistant"):
+    time_bot = now_str()
+    with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("JAssist sedang mengetik…"):
             placeholder = st.empty()
             full_text = ""
@@ -74,13 +132,11 @@ if prompt:
                 full_text = f"Maaf, terjadi kesalahan: {e}"
                 placeholder.markdown(full_text)
 
-    # Simpan jawaban bot ke riwayat UI
-    st.session_state.messages.append({"role": "assistant", "content": full_text})
+        # timestamp di bawah balasan
+        if compact:
+            st.markdown(f"<div class='small-muted'>{time_bot}</div>", unsafe_allow_html=True)
+        else:
+            st.caption(time_bot)
 
-# =============== KONTROL TAMBAHAN ===============
-st.divider()
-if st.button("🧹 Hapus Riwayat Chat"):
-    st.session_state.messages = []
-    model = genai.GenerativeModel(MODEL_NAME, system_instruction=SYSTEM_PROMPT)
-    st.session_state.chat = model.start_chat(history=[])
-    st.rerun()
+    # Simpan jawaban bot ke riwayat UI
+    st.session_state.messages.append({"role": "assistant", "content": full_text, "time": time_bot})
