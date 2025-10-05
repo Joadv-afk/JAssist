@@ -19,8 +19,11 @@ hr {margin: 0.6rem 0;}
 
 # =============== HEADER ===============
 st.title("💬 JAssist")
-st.caption("Siap membantu apa pun topikmu (Sesi chat akan hilang jika di reload)"\n
-           "Isi chat bisa di download)
+st.caption("""
+Siap membantu apa pun topikmu.
+Sesi chat akan hilang jika di-reload.
+Isi chat bisa di-download.
+""")
 
 # =============== API KEY SETUP ===============
 load_dotenv()
