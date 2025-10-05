@@ -21,7 +21,7 @@ def dapatkan_respon(user_input):
         model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(
             f"""
-            Kamu adalah asisten AI yang ramah dan membantu bernama **JordyBot**.
+            Kamu adalah asisten AI yang ramah dan membantu bernama **JAssist**.
             Balas dengan gaya percakapan santai, sopan, dan mudah dipahami.
             Jika pertanyaan terlalu sensitif, jawab dengan netral dan aman.
             Berikut pertanyaan pengguna:
@@ -33,8 +33,8 @@ def dapatkan_respon(user_input):
         return f"Terjadi kesalahan: {e}"
 
 # --- ANTARMUKA UTAMA ---
-st.set_page_config(page_title="💬 JordyBot - Asisten Serbaguna", page_icon="💬", layout="centered")
-st.title("💬 JordyBot - Asisten Serbaguna")
+st.set_page_config(page_title="💬 JAssist", page_icon="💬", layout="centered")
+st.title("💬 JAssist")
 st.caption("Ngobrol santai dengan AI yang siap membantu apa pun topikmu 🤖")
 
 # --- INPUT PENGGUNA ---
@@ -45,11 +45,11 @@ if st.button("Kirim"):
         # Simpan input ke riwayat
         st.session_state.chat_history.append(("🧑 Kamu", user_input))
         
-        with st.spinner("JordyBot sedang mengetik..."):
+        with st.spinner("JAssist sedang mengetik..."):
             bot_reply = dapatkan_respon(user_input)
         
         # Simpan balasan bot ke riwayat
-        st.session_state.chat_history.append(("🤖 JordyBot", bot_reply))
+        st.session_state.chat_history.append(("🤖 JAssist", bot_reply))
     else:
         st.warning("Tolong ketik sesuatu dulu ya!")
 
