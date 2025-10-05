@@ -32,8 +32,6 @@ if not GOOGLE_API_KEY:
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # =============== PARAMETER BOT ===============
-MODEL_NAME = "gemini-2.5-flash"
-TEMPERATURE = 0.6
 SYSTEM_PROMPT = (
     "Kamu adalah JAssist, asisten AI berbahasa Indonesia yang ramah, ringkas, dan membantu. "
     "Gunakan bahasa sederhana, sopan, dan jelas. Bila cocok, gunakan poin-poin. "
@@ -63,9 +61,6 @@ with st.sidebar:
         model = genai.GenerativeModel(MODEL_NAME, system_instruction=SYSTEM_PROMPT)
         st.session_state.chat = model.start_chat(history=[])
         st.rerun()
-
-# =============== STATUS CHIP ===============
-st.info(f"**JAssist** • Model: `{MODEL_NAME}` • Suhu: `{TEMPERATURE}`", icon="🧠")
 
 # =============== INIT SESSION STATE ===============
 if "messages" not in st.session_state:
